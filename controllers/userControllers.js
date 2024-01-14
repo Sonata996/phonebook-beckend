@@ -6,7 +6,7 @@ const { SECRET_KEY } = process.env;
 
 const signup = async (req, res, next) => {
   try {
-    const { email, name, password} = req.body;
+    const { email, name, password } = req.body;
     const user = await User.findOne({ email });
     if (user) {
       res.status(409).json({
@@ -15,9 +15,30 @@ const signup = async (req, res, next) => {
       return;
     }
     const avatarURL = gravatar.url(email);
-    const newUser = new User({name, email, password, avatarURL})    ;
+    const newUser = new User({ name, email, password, avatarURL });
     await newUser.hashPassword();
+
+    await newUser.save();
+    const payload = {
+      id: newUser._id,
+    };
+
+    const token = jwt.sign(payload, SECRET_KEY);
+
+    await User.findByIdAndUpdate(newUser._id, { token });
+
+    res.status(201).json({
+      token,
+      user: {
+        name,
+        email,
+        avatarURL,
+      },
+    });
   } catch (error) {
     console.log(error);
   }
+};
+module.exports = {
+  signup,
 };
