@@ -39,6 +39,43 @@ const signup = async (req, res, next) => {
     console.log(error);
   }
 };
+
+const login = async (req, res, next) => {
+  try {
+    const { password, email } = req.body;
+    const user = await User.findOne({email});
+    if (!user) {
+      res.status(401).json({
+        message: "password or email not correct",
+      });
+    }
+    const compareResult = await user.comparepassword(password);
+    if (!compareResult) {
+      res.status(401).json({
+        message: "password or email not correct",
+      });
+    }
+    const payload = {
+      id: user._id,
+    };
+
+    const token = jwt.sign(payload, SECRET_KEY);
+    await User.findOneAndUpdate(user._id, { token });
+    const { name, avatarURL } = user;
+    res.status(201).json({
+      token,
+      user: {
+        name,
+        email,
+        avatarURL,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
   signup,
+  login,
 };
