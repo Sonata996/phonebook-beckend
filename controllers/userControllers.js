@@ -43,7 +43,7 @@ const signup = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { password, email } = req.body;
-    const user = await User.findOne({email});
+    const user = await User.findOne({ email });
     if (!user) {
       res.status(401).json({
         message: "password or email not correct",
@@ -75,7 +75,21 @@ const login = async (req, res, next) => {
   }
 };
 
+const logOut = async (req, res, next) => {
+  const { _id } = req.user;
+  await User.findByIdAndUpdate(_id, { token: "" });
+  res.sendStatus(204);
+};
+
+const currentUser = (req, res, next) => {
+  const { email, name, avatarURL } = req.user;
+
+  res.json({ name, email, avatarURL });
+};
+
 module.exports = {
   signup,
   login,
+  logOut,
+  currentUser,
 };
