@@ -1,6 +1,9 @@
 const User = require("../db/models/userModel");
 const jwt = require("jsonwebtoken");
 const gravatar = require("gravatar");
+const fs = require('fs/promises');
+const path = require("path");
+
 
 const { SECRET_KEY } = process.env;
 
@@ -87,9 +90,37 @@ const currentUser = (req, res, next) => {
   res.json({ name, email, avatarURL });
 };
 
+const addAvatar = async (req, res, next)=>{
+  try {
+    if(!req.file){
+      res.status(400).json({
+        message: "avatar was not found"
+      })
+      return ;
+    }
+    const {_id} = req.user;
+    const {path: oldPath, originalname} = req.file;
+    const avatarPath = path.join(__dirname, "../public", "avatars");
+    const newName = `${_id}_${originalname}`
+    const newPath = path.join(avatarPath, newName);
+    await fs.rename(oldPath, newPath);
+    
+    const avatarURL = path.join("avatars", newName);
+    
+    await User.findByIdAndUpdate(_id, {avatarURL})
+
+    res.json({avatarURL});
+  } catch (error) {
+    next(error)
+  }
+  
+  }
+
+
 module.exports = {
   signup,
   login,
   logOut,
   currentUser,
+  addAvatar
 };
